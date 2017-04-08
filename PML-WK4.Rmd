@@ -1,0 +1,97 @@
+---
+title: "PML - Course Project"
+author: "Simon C"
+date: "6 April 2017"
+output: html_document
+---
+#Predicting Personal Activity
+In this assignment we will predict the classification of 5 different activities recorded by 6 participants in a study.  
+
+##Data
+The training data for this project are available [here](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv)
+  
+The test data are available [here](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv)
+  
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_knit$set(root.dir= '~/Desktop/coursera/Assignments/PML')
+```
+
+```{r, message=FALSE, warning=FALSE}
+#set up libraries
+library(caret)
+library(ggplot2)
+library(rpart)
+library(randomForest)
+```
+
+We will first load the data.  
+```{r}
+#load data
+trainingdata <- read.csv('./data/pml-training.csv')
+problem <- read.csv('./data/pml-testing.csv')
+```
+The training data consists of 19,622 observations of 160 observations.  The test data consists of 20 observations of 53 variables.  
+
+The variables missing from the test data have missing values in the training set and so we will remove them. The class response in the test set will need to be predicted.   We will split the training data into training and validation sets.   
+
+```{r}
+#remove X and username
+trainingdata <- subset(trainingdata, select=!(names(trainingdata) %in% c('X','user_name','raw_timestamp_part_1','raw_timestamp_part_2','cvtd_timestamp','new_window','num_window')))
+
+problem <- subset(problem, select=!(names(problem) %in% c('X','user_name','raw_timestamp_part_1','raw_timestamp_part_2','cvtd_timestamp','new_window','num_window')))
+
+a <- sapply(problem,function(x){ sum(is.na(x))} )
+problem <- subset(problem, select=!(names(problem) %in% names(a[a==20])))
+
+trainingdata <- subset(trainingdata, select=(names(trainingdata) %in% c(names(problem),'classe')))
+
+
+#split trainingdata into train and test
+set.seed(123321)
+intrain <- createDataPartition(trainingdata$classe, p=0.7, list=FALSE)
+
+train <- trainingdata[intrain,]
+test <- trainingdata[-intrain,]
+
+```
+
+##Prediction
+We will first fit a single tree to the data to understand the based accuracy.  
+```{r cachedChunk1, cache=TRUE}
+modelRPART <- rpart(classe ~ ., data = train, method="class")
+confusionMatrix(train$classe,predict(modelRPART, newdata=train, type="class")) 
+```
+
+The single tree was only 73% accurate.  
+
+We will now fit a Random Forest to the training data.  Limiting growth to 20 trees creates a model that is 99.99% accurate on the training set.  
+
+```{r cachedChunk2, cache=TRUE}
+#Fit RF
+
+modelRF <- randomForest(classe ~ ., data=train, ntree=20)
+
+confusionMatrix(train$classe,predict(modelRF, newdata=train))                        
+
+```
+The model also is 99% accurate on the validation set.
+
+```{r}
+confusionMatrix(test$classe,predict(modelRF, newdata=test))                   
+```
+##Importance
+The importance plot shows that 8 variables have the most impact on the classification.
+
+```{r}
+varImpPlot(modelRF, type=2, col=1, cex=0.8)
+```
+
+##Prediction
+Finally we will predict the classes of the 20 test observations.
+```{r}
+predict(modelRF, newdata = problem)
+
+```
+
