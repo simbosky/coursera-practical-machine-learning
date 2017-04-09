@@ -8,7 +8,8 @@ output: html_document
 In this assignment we will predict the classification of 5 different activities recorded by 6 participants in a study.  
 
 ##Background
-Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is qu  antify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+
 ##Data
 The training data for this project are available [here](https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv)
   
@@ -66,9 +67,17 @@ modelRPART <- rpart(classe ~ ., data = train, method="class")
 confusionMatrix(train$classe,predict(modelRPART, newdata=train, type="class")) 
 ```
 
-The single tree was only 73% accurate.  
+The single tree was only 73% accurate.  Let's try with cross-validation.  
+```{r}
+tc <- trainControl("cv", 10)
+rpart.grid <- expand.grid(.cp = 0.01)
+train.rpart <- train(classe ~ . , data=train, method = "rpart", trControl=tc,tuneGrid=rpart.grid)
+train.rpart
+```
 
-We will now fit a Random Forest to the training data.  Limiting growth to 20 trees creates a model that is 99.99% accurate on the training set.  
+A consistent 74% so let's try a new model.  
+
+We will now fit a Random Forest to the training data which will not need additional cross-validation.  Limiting growth to 20 trees creates a model that is 99.99% accurate on the training set.  
 
 ```{r cachedChunk2, cache=TRUE}
 #Fit RF

@@ -128,7 +128,11 @@ $(document).ready(function () {
 <p>In this assignment we will predict the classification of 5 different activities recorded by 6 participants in a study.</p>
 <div id="background" class="section level2">
 <h2>Background</h2>
-<p>Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <a href="http://groupware.les.inf.puc-rio.br/har" class="uri">http://groupware.les.inf.puc-rio.br/har</a> (see the section on the Weight Lifting Exercise Dataset). ##Data The training data for this project are available <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">here</a></p>
+<p>Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is qu antify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: <a href="http://groupware.les.inf.puc-rio.br/har" class="uri">http://groupware.les.inf.puc-rio.br/har</a> (see the section on the Weight Lifting Exercise Dataset).</p>
+</div>
+<div id="data" class="section level2">
+<h2>Data</h2>
+<p>The training data for this project are available <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv">here</a></p>
 <p>The test data are available <a href="https://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv">here</a></p>
 <pre class="r"><code>#set up libraries
 library(caret)
@@ -195,8 +199,29 @@ confusionMatrix(train$classe,predict(modelRPART, newdata=train, type=&quot;class
 ## Detection Rate         0.2568   0.1161   0.1334   0.0915   0.1327
 ## Detection Prevalence   0.2843   0.1935   0.1744   0.1639   0.1838
 ## Balanced Accuracy      0.8793   0.7984   0.7934   0.7992   0.8658</code></pre>
-<p>The single tree was only 73% accurate.</p>
-<p>We will now fit a Random Forest to the training data. Limiting growth to 20 trees creates a model that is 99.99% accurate on the training set.</p>
+<p>The single tree was only 73% accurate. Let’s try with cross-validation.</p>
+<pre class="r"><code>tc &lt;- trainControl(&quot;cv&quot;, 10)
+rpart.grid &lt;- expand.grid(.cp = 0.01)
+train.rpart &lt;- train(classe ~ . , data=train, method = &quot;rpart&quot;, trControl=tc,tuneGrid=rpart.grid)
+train.rpart</code></pre>
+<pre><code>## CART 
+## 
+## 13737 samples
+##    52 predictors
+##     5 classes: 'A', 'B', 'C', 'D', 'E' 
+## 
+## No pre-processing
+## Resampling: Cross-Validated (10 fold) 
+## Summary of sample sizes: 12364, 12363, 12363, 12364, 12363, 12363, ... 
+## Resampling results:
+## 
+##   Accuracy   Kappa    
+##   0.7323288  0.6599946
+## 
+## Tuning parameter 'cp' was held constant at a value of 0.01
+## </code></pre>
+<p>A consistent 74% so let’s try a new model.</p>
+<p>We will now fit a Random Forest to the training data which will not need additional cross-validation. Limiting growth to 20 trees creates a model that is 99.99% accurate on the training set.</p>
 <pre class="r"><code>#Fit RF
 
 modelRF &lt;- randomForest(classe ~ ., data=train, ntree=20)
